@@ -1,0 +1,52 @@
+# An implementation of banner-like utility in sed.
+# See README.md for details.
+
+# Available at https://github.com/Circiter/banner-in-sed
+
+# (c) Circiter (mailto:xcirciter@gmail.com)
+# License: MIT
+
+s/#/x/g
+
+s/$/\n\n$$$\n###/
+
+# TODO: Add more consistent support for imported fonts
+#       (with arbitrary elementary characters).
+# TODO: Think about multi-line printing support.
+# FIXME: Incorrect position for _.
+# FIXME: Spaces do not render correctly.
+# FIXME: Figure out a more convenient delimeter instead of \n\n$$$.
+
+:render_string
+    # Insert auxiliary markers.
+    s/^([^\n])(.*\n\1\n)/\1\2@@@/
+    s/(\n\n\$\$\$\n[^\n]*)\n/\1###\n/
+    s/^[^\n]//
+
+    :render_symbol
+        # Copy one row of the symbol matrix and select next row.
+        s/@@@([^\n]*\n)(.*\n\n\$\$\$.*)###\n*/\1@@@\2     \1###/
+        # Adjust the artificial initial gap here ------^
+        s/###([^\n]*)\n/\1###\n/ # Move the insertion point.
+        /@@@\n/! brender_symbol
+
+    s/@@@\n/\n/; s/(\n\n\$\$\$\n.*)###/\1/
+
+    :autokerning # Automatically adjust distances between symbols.
+        # Play the animation of kerning (comment out
+        # the next line to disable the animation).
+        h; x; s/^.*\n\n\$\$\$\n//; y/ y/ #/; s/$/\x1b[?25l\x1b[H/ p; x
+        # Insert auxiliary marks.
+        :mark_rows
+            s/(\n\n\$\$\$.*\n[^\n@x]* *)([\nx])/\1@\2/
+            /\n\n\$\$\$.*\n[^\n@]*\n/ bmark_rows
+        /\n\n\$\$\$.*y @/! {/\n\n\$\$\$.*\n@/! {
+            /\n\n\$\$\$.*y x/! {/\n\n\$\$\$.*\nx/! {
+                s/ @//g;
+                bautokerning}}}}
+
+    :remove s/(\n\n\$\$\$.*)@/\1/; /\n\n\$\$\$.*@/ bremove
+    :replace s/(\n\n\$\$\$.*)x/\1y/; /\n\n\$\$\$.*x/ breplace
+    /^\n/!brender_string
+
+s/^.*\n\n\$\$\$\n//; s/\n$//; y/\.y/ #/; p
