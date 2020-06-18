@@ -7,7 +7,7 @@
 # License: MIT
 
 s/#/x/g
-
+x; s/^/\x1b[H/; p; s/^.*$//; x
 s/$/\n\n$$$\n###/
 
 # TODO: Add more consistent support for imported fonts
